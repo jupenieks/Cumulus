@@ -487,9 +487,7 @@ public without sharing class UTIL_CustomSettingsFacade {
  
         //if the caller explicitly is testing Household objects, make sure we have HH Accounts turned off.
         if (householdsSettings.npo02__Household_Rules__c != HH_Households.NO_HOUSEHOLDS_PROCESSOR) {
-            contactsSettings = getContactsSettingsforTests(
-                new npe01__Contacts_And_Orgs_Settings__c(npe01__Account_Processor__c = CAO_Constants.ONE_TO_ONE_PROCESSOR));
-                upsert contactsSettings;      
+            getContactsSettingsforTests(new npe01__Contacts_And_Orgs_Settings__c(npe01__Account_Processor__c = CAO_Constants.ONE_TO_ONE_PROCESSOR));  
         }
         return householdsSettings;
     }
