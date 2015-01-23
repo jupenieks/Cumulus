@@ -441,8 +441,7 @@ public without sharing class UTIL_CustomSettingsFacade {
      * Methods that will create custom settings for tests.
      **/
     public static npe01__Contacts_And_Orgs_Settings__c getContactsSettingsForTests(npe01__Contacts_And_Orgs_Settings__c mySettings) {
-        if(contactsSettings == null)
-            contactsSettings = npe01__Contacts_And_Orgs_Settings__c.getInstance();
+        contactsSettings = getContactsSettings();
         
         //create our own based on what's passed in from the test
         contactsSettings.npe01__One_to_One_RecordTypeID__c = mySettings.npe01__One_to_One_RecordTypeID__c;
@@ -455,13 +454,12 @@ public without sharing class UTIL_CustomSettingsFacade {
         contactsSettings.Organizational_Account_Addresses_Enabled__c = mySettings.Organizational_Account_Addresses_Enabled__c;
         contactsSettings.Simple_Address_Change_Treated_as_Update__c = mySettings.Simple_Address_Change_Treated_as_Update__c;
         contactsSettings.Household_Account_Addresses_Disabled__c = mySettings.Household_Account_Addresses_Disabled__c;
-        upsert contactsSettings;
+        //upsert contactsSettings;
         return contactsSettings;
     }
     
     public static npo02__Households_Settings__c getHouseholdsSettingsForTests(npo02__Households_Settings__c mySettings) {
-        if(householdsSettings == null)
-            householdsSettings = npo02__Households_Settings__c.getInstance();
+        householdsSettings = getHouseholdsSettings();
             
         //create our own based on what's passed in from the test
         householdsSettings.npo02__Household_Rules__c = mySettings.npo02__Household_Rules__c;
@@ -483,7 +481,7 @@ public without sharing class UTIL_CustomSettingsFacade {
         householdsSettings.npo02__Household_Creation_Excluded_Recordtypes__c = mySettings.npo02__Household_Creation_Excluded_Recordtypes__c;
         householdsSettings.npo02__Household_Mailing_List_ID__c = mySettings.npo02__Household_Mailing_List_ID__c;
         householdsSettings.npo02__Schedule_Job_Limit__c = 25;
-        upsert householdsSettings;
+        //upsert householdsSettings;
  
         //if the caller explicitly is testing Household objects, make sure we have HH Accounts turned off.
         if (householdsSettings.npo02__Household_Rules__c != HH_Households.NO_HOUSEHOLDS_PROCESSOR) {
@@ -493,39 +491,35 @@ public without sharing class UTIL_CustomSettingsFacade {
     }
     
     public static npe4__Relationship_Settings__c getRelationshipsSettingsForTests(npe4__Relationship_Settings__c mySettings) {
-        if(relationshipsSettings == null)
-            relationshipsSettings = npe4__Relationship_Settings__c.getInstance();
+        relationshipsSettings = getRelationshipSettings();
         
         //create our own based on what's passed in from the test
         relationshipsSettings.npe4__Reciprocal_Method__c = mySettings.npe4__Reciprocal_Method__c;
         relationshipsSettings.npe4__Gender_Field__c = mySettings.npe4__Gender_Field__c;
-        upsert relationshipsSettings;
+        //upsert relationshipsSettings;
         return relationshipsSettings;
     }
     
     public static npe5__Affiliations_Settings__c getAffiliationsSettingsForTests(npe5__Affiliations_Settings__c mySettings) {
-        if(affiliationsSettings == null)
-           affiliationsSettings = npe5__Affiliations_Settings__c.getInstance();
+        affiliationsSettings =getAffiliationsSettings();
            
         affiliationsSettings.npe5__Automatic_Affiliation_Creation_Turned_On__c = mySettings.npe5__Automatic_Affiliation_Creation_Turned_On__c;   
-        upsert affiliationsSettings;
+        //upsert affiliationsSettings;
         return affiliationsSettings;
     }
     
     public static Error_Settings__c getErrorSettingsForTests(Error_Settings__c mySettings) {
-    	if(errorSettings == null)
-    	   errorSettings = Error_Settings__c.getInstance();
+    	errorSettings = getErrorSettings();
     	   
     	errorSettings.Error_Notifications_On__c = mySettings.Error_Notifications_On__c;   
     	errorSettings.Error_Notifications_To__c = mySettings.Error_Notifications_To__c;
     	errorSettings.Store_Errors_On__c = mySettings.Store_Errors_On__c;
-    	upsert errorSettings;
+    	//upsert errorSettings;
     	return errorSettings;  
     }
     
     public static Addr_Verification_Settings__c getAddressVerificationSettingsForTests(Addr_Verification_Settings__c mySettings) {
-    	if(addressVerificationSettings == null)
-    	   addressVerificationSettings = Addr_Verification_Settings__c.getInstance();
+       addressVerificationSettings = getAddressVerificationSettings();
     	
 	   addressVerificationSettings.Using_SmartyStreets__c = mySettings.Using_SmartyStreets__c;
        addressVerificationSettings.Enable_Automatic_Verification__c = mySettings.Enable_Automatic_Verification__c;
@@ -535,13 +529,12 @@ public without sharing class UTIL_CustomSettingsFacade {
        addressVerificationSettings.Address_Verification_Endpoint__c = mySettings.Address_Verification_Endpoint__c;
        addressVerificationSettings.Zipcode_Verification_Endpoint__c = mySettings.Zipcode_Verification_Endpoint__c;
        addressVerificationSettings.Class__c = mySettings.Class__c;
-       upsert addressVerificationSettings;
+       //upsert addressVerificationSettings;
        return addressVerificationSettings;
     }
 
     public static Allocations_Settings__c getAllocationsSettingsForTests(Allocations_Settings__c mySettings) {
-        if (allocationsSettings == null)
-            allocationsSettings = getOrgAllocationsSettings();
+        allocationsSettings = getAllocationsSettings();
 
         allocationsSettings.Default_Allocations_Enabled__c = mySettings.Default_Allocations_Enabled__c;
         allocationsSettings.Default__c = mySettings.Default__c;
@@ -550,7 +543,7 @@ public without sharing class UTIL_CustomSettingsFacade {
         allocationsSettings.Rollup_N_Day_Value__c = mySettings.Rollup_N_Day_Value__c;
         allocationsSettings.Use_Fiscal_Year_for_Rollups__c = mySettings.Use_Fiscal_Year_for_Rollups__c;
 
-        upsert allocationsSettings;
+        //upsert allocationsSettings;
         return allocationsSettings;
     }
 }
