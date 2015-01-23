@@ -56,6 +56,7 @@ public with sharing class ADDR_Validator_TEST {
 		        Enable_Automatic_Verification__c = true,
 		        Reject_Ambiguous_Addresses__c = true)
         );
+        return settings;
     }
     
     static testMethod void testContactAddress() {
