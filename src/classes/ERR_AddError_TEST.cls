@@ -53,6 +53,7 @@ public with sharing class ERR_AddError_TEST {
         delete acc2;
         
         try {
+        	TDTM_TriggerHandler.suppressDebugAssertAfterErrorLogging = true;
             insert contacts;
         } catch(DmlException e) {
             System.assertEquals(1, e.getNumDml());
@@ -84,6 +85,7 @@ public with sharing class ERR_AddError_TEST {
         delete new Account[] {acc2, acc4};
         
         try {
+            TDTM_TriggerHandler.suppressDebugAssertAfterErrorLogging = true;
             insert contacts;
         } catch(DmlException e) {
             System.assertEquals(2, e.getNumDml());
@@ -125,6 +127,7 @@ public with sharing class ERR_AddError_TEST {
         
         delete new Account[] {acc2, acc4};
         
+        TDTM_TriggerHandler.suppressDebugAssertAfterErrorLogging = true;
         List<Database.Saveresult> results = Database.insert(contacts, false);
         System.assertEquals(4, results.size());
         System.assertEquals(true, results[0].isSuccess());

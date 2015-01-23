@@ -30,6 +30,7 @@
 /**
 * @author Salesforce.com Foundation
 * @date 2014
+* @group Settings
 * @description The controller for the Autocreate Relationships panel 
 */
 public with sharing class STG_PanelRelAuto_CTRL extends STG_Panel {
@@ -74,7 +75,7 @@ public with sharing class STG_PanelRelAuto_CTRL extends STG_Panel {
             acNew = null;
         } catch(Exception e) {
             Database.rollback(sp);
-            ERR_Handler.processError(e, ERR_Handler.Context.STTG);
+            ERR_Handler.processError(e, ERR_Handler_API.Context.STTG);
             ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, e.getMessage()));
         }
         return null;
@@ -101,7 +102,7 @@ public with sharing class STG_PanelRelAuto_CTRL extends STG_Panel {
             }
         } catch(Exception e) {
             Database.rollback(sp);
-            ERR_Handler.processError(e, ERR_Handler.Context.STTG);
+            ERR_Handler.processError(e, ERR_Handler_API.Context.STTG);
             ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, e.getMessage()));
         }
         return null;

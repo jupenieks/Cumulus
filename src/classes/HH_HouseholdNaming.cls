@@ -30,6 +30,7 @@
 /**
 * @author Salesforce.com Foundation
 * @date 2011 (2.3)
+* @group Households
 * @description Controls generation of household names for lists of households 
 * NOTE: This class handles both household naming for the Household__c object
 * as well as for HH Account objects. 
@@ -45,10 +46,20 @@ public without sharing class HH_HouseholdNaming {
         //and pass in our param
         //this is b/c of the public visibility
         HH_HouseholdNaming hn = new HH_HouseholdNaming();
-        hn.UpdateNames(hhids);      
+        Savepoint sp = Database.setSavepoint();
+        try {
+            hn.UpdateNames(hhids);
+        } catch(Exception e) {
+        	Database.rollback(sp);
+        	ERR_Handler.processError(e, ERR_Handler_API.Context.HH);
+        }      
         HH_ProcessControl.inFutureContext = false;    
     }
 
+    // we now want to always call UpdateNames() because it will set Number_Of_Household_Members__c, and
+    // it will be responsible for only updating names if the advanced household naming is true.
+    // so any code that used to check for advanced household naming should no longer do so,
+    // (unless it is only for a naming scenario that would possibly change number of household members.)
     public void UpdateNames(list<id> hhids){
         
         //we need this turned on to prevent recursive triggering on household creation        
@@ -57,10 +68,10 @@ public without sharing class HH_HouseholdNaming {
         //get all of the contacts and their associated households
         //return them in the order of household and then household naming order
         //we use dynamic soql so we can include all contact fields, since custom naming may refer to any field.
-        string strSoql = strContactSelectStmtAllFields;
+        string strSoql = strContactSelectStmtAllNamingFields;
         string strHHId = UTIL_Namespace.StrTokenNSPrefix('HHId__c');
-        strSoql += ' WHERE AccountId IN :hhids OR npo02__Household__c in :hhids ' +
-            ' ORDER BY ' + strHHId + ', npo02__Household_Naming_Order__c ASC NULLS LAST, CreatedDate ';     
+        strSoql += ' WHERE (AccountId != null AND AccountId IN :hhids) OR (npo02__Household__c != null AND npo02__Household__c in :hhids) ' +
+            ' ORDER BY ' + strHHId + ', Primary_Contact__c DESC, npo02__Household_Naming_Order__c ASC NULLS LAST, CreatedDate ';     
         list<Contact> contactlist = Database.Query(strSoql); 
         
         list<SObject> listHHObj = [select Id, Name, npo02__SYSTEM_CUSTOM_NAMING__c from npo02__Household__c where id IN : hhids];
@@ -83,25 +94,30 @@ public without sharing class HH_HouseholdNaming {
                 clist.add(c);                
             }
         }
-                
+         
+        npo02__Households_Settings__c hs = UTIL_CustomSettingsFacade.getHouseholdsSettings();
+               
         //loop through the households needing name changes, if necessary, make them.
         for (SObject h : hhupdatelist){    
             ID hhId = string.valueOf(h.get('Id'));
             list<Contact> listCon = hhIDContactMap.get(hhId);
-            string customnameparam = '';
-            if (h.get('npo02__SYSTEM_CUSTOM_NAMING__c') != null){
-                customnameparam = string.valueOf(h.get('npo02__SYSTEM_CUSTOM_NAMING__c'));
-            }            
-            
-            if (!customnameparam.contains('Name'))
-                h.put('Name', getHHName(listCon));
-            
-            if (!customnameparam.contains('Formal_Greeting__c'))
-                h.put('npo02__Formal_Greeting__c', getFormalName(listCon));
 
-            if (!customnameparam.contains('Informal_Greeting__c'))
-                h.put('npo02__Informal_Greeting__c', getInformalName(listCon));   
-            
+            if (hs.npo02__Advanced_Household_Naming__c == true) {
+	            string customnameparam = '';
+	            if (h.get('npo02__SYSTEM_CUSTOM_NAMING__c') != null){
+	                customnameparam = string.valueOf(h.get('npo02__SYSTEM_CUSTOM_NAMING__c'));
+	            }            
+	            
+	            if (!customnameparam.contains('Name'))
+	                h.put('Name', getHHName(listCon));
+	            
+	            if (!customnameparam.contains('Formal_Greeting__c'))
+	                h.put('npo02__Formal_Greeting__c', getFormalName(listCon));
+	
+	            if (!customnameparam.contains('Informal_Greeting__c'))
+	                h.put('npo02__Informal_Greeting__c', getInformalName(listCon));   
+            }
+                        
             // now we also store the number of members on the Household!
             h.put(UTIL_Namespace.StrTokenNSPrefix('Number_of_Household_Members__c'), listCon != null ? listCon.size() : 0);          
         } 
@@ -117,7 +133,7 @@ public without sharing class HH_HouseholdNaming {
     
     
     // our cached copy of the Household Naming Settings
-    private Household_Naming_Settings__c hns {
+    private static Household_Naming_Settings__c hns {
         get {
             if (hns == null) hns = UTIL_CustomSettingsFacade.getHouseholdNamingSettings();
             return hns;
@@ -125,7 +141,7 @@ public without sharing class HH_HouseholdNaming {
         set;
     }
 
-    private HH_INaming iNaming {
+    public static HH_INaming iNaming {
     	get {
     		if (iNaming == null) {                
 		        string strClass = hns.Implementing_Class__c;  
@@ -146,7 +162,7 @@ public without sharing class HH_HouseholdNaming {
     //get generic household name 
     public string getHHName(list<Contact> ContactList){        
         if (ContactList == null)
-            return '';
+            ContactList = new list<Contact>();
     	list<Contact> listCon = new list<Contact>();
     	for (Contact con : ContactList) {
             if (con.npo02__Naming_Exclusions__c == null || !con.npo02__Naming_Exclusions__c.contains('Name'))
@@ -210,7 +226,7 @@ public without sharing class HH_HouseholdNaming {
     //just pile up first names for qualifying contacts
     public  string getInformalName(list<Contact> ContactList){
         if (ContactList == null)
-            return '';
+            ContactList = new list<Contact>();
         list<Contact> listCon = new list<Contact>();
         for (Contact con : ContactList) {
             if (con.npo02__Naming_Exclusions__c == null || !con.npo02__Naming_Exclusions__c.contains('Informal_Greeting__c'))
@@ -270,7 +286,7 @@ public without sharing class HH_HouseholdNaming {
     
     public  string getFormalName(list<Contact> ContactList){
         if (ContactList == null)
-            return '';
+            ContactList = new list<Contact>();
         list<Contact> listCon = new list<Contact>();
         for (Contact con : ContactList) {
             if (con.npo02__Naming_Exclusions__c == null || !con.npo02__Naming_Exclusions__c.contains('Formal_Greeting__c'))
@@ -373,21 +389,46 @@ public without sharing class HH_HouseholdNaming {
         set;
     }    
 
-    public static string strContactSelectStmtAllFields {
+    public string strContactSelectStmtAllNamingFields {
         get {
-	        if (strContactSelectStmtAllFields == null) {
+	        if (strContactSelectStmtAllNamingFields == null) {
 		        //we use dynamic soql so we can include all contact fields, since custom naming may refer to any field.
-		        string strSoql = 'SELECT ';
-		        string strComma = '';
+		        string strSoql = 'SELECT Id, HHId__c, npo02__Naming_Exclusions__c';
+		        
+		        set<string> setStrField = iNaming.setHousholdNameFieldsOnContact();
+		        for (string strF : setStrField) {
+                    if (strF == 'Salutation') strF = 'toLabel(Salutation)';
+                    strSoql += ', ' + strF;
+		        }  
+		        
+		        /***********
 		        for (string strF : listStrContactFields) {
-		            if (strF == 'Salutation') strF = 'toLabel(Salutation)';
-		            strSoql += strComma + strF;
-		            strComma = ', ';
+		        	// only include Text, TextArea, and Picklist fields for custom household naming
+		        	// also include a bunch of types needed by the ManageHouseholdUI code
+		        	Schema.Displaytype dt = UTIL_Describe.getFieldDisplaytype('Contact', strF);
+		        	if (dt == Schema.Displaytype.ID || 
+                        dt == Schema.Displaytype.String || 
+                        //dt == Schema.Displaytype.TextArea || //THESE EAT UP TOO MUCH HEAP SPACE!! 
+                        dt == Schema.DisplayType.Picklist ||
+                        dt == Schema.DisplayType.MultiPicklist ||  // needed for naming exclusions
+                        dt == Schema.DisplayType.Integer ||
+                        dt == Schema.DisplayType.Double ||   // needed for name order
+                        dt == Schema.DisplayType.Date ||  // needed for CreatedDate
+                        dt == Schema.DisplayType.DateTime ||
+                        dt == Schema.DisplayType.Boolean || // needed for isAddressOverride
+                        dt == Schema.DisplayType.Reference  // needed for HHId
+                    ) {
+			            if (strF == 'Salutation') strF = 'toLabel(Salutation)';
+			            strSoql += strComma + strF;
+			            strComma = ', ';
+		        	}
 		        }
+		        **********/
+		        
 		        strSoql += ' FROM Contact ';
-		        strContactSelectStmtAllFields = strSoql;
+		        strContactSelectStmtAllNamingFields = strSoql;
 	        }
-	        return strContactSelectStmtAllFields;
+	        return strContactSelectStmtAllNamingFields;
         }
         private set;        
     }    
@@ -408,8 +449,10 @@ public without sharing class HH_HouseholdNaming {
         if (!HH_ProcessControl.inFutureContext && 
             (triggerAction == TDTM_Runnable.Action.BeforeUpdate || triggerAction == TDTM_Runnable.Action.AfterUpdate)) {
             
-            if (hs != null && hs.npo02__Advanced_Household_Naming__c == true) {
-
+            // no need to do any of this name checking if we aren't using auto household naming.
+            // even though UpdateNames() keeps Number of Household Members updated, there is no need
+            // to call it from here which is just trying to detect manual hh name changes.
+            if (hs != null && hs.npo02__Advanced_Household_Naming__c == true ) {
                 // AfterUpdate data
                 list<id> hhlist = new list<id>();
                                        
@@ -466,6 +509,8 @@ public without sharing class HH_HouseholdNaming {
                         else if (h.get('npo02__Formal_Greeting__c') == system.Label.npo02.NameReplacementText)
                             hhlist.add(h.id);       
                         else if (h.get('npo02__SYSTEM_CUSTOM_NAMING__c') != mapIdHHOld.get(h.id).get('npo02__SYSTEM_CUSTOM_NAMING__c'))
+                            hhlist.add(h.id);                        
+                        else if (h.getSObjectType() == Account.sObjectType && h.get('npe01__One2OneContact__c') != mapIdHHOld.get(h.id).get('npe01__One2OneContact__c'))
                             hhlist.add(h.id);                        
                     }
                 }

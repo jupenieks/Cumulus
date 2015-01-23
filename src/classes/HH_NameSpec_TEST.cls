@@ -30,6 +30,7 @@
 /**
 * @author Salesforce.com Foundation
 * @date 2013
+* @group Households
 * @description tests specific to the HH_NameSpec custom household naming class 
 */
 
@@ -65,7 +66,8 @@ private with sharing class HH_NameSpec_TEST {
         listCon.add(c1);
                
         HH_NameSpec ns = new HH_NameSpec();
-        Household_Naming_Settings__c hns = UTIL_CustomSettingsFacade.getHouseholdNamingSettings();
+        //Using the API class just to give it test coverage.
+        Household_Naming_Settings__c hns = UTIL_CustomSettings_API.getHouseholdNamingSettings();
         
         hns.Household_Name_Format__c = '{!LastName} Family';
         system.assertEquals('Doe Family', ns.getExampleName(hns, 'Household_Name_Format__c', listCon));

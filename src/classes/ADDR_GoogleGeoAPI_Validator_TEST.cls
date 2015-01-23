@@ -168,7 +168,7 @@ public with sharing class ADDR_GoogleGeoAPI_Validator_TEST {
         Addr_Verification_Settings__c settings = ADDR_GoogleGeoAPI_Validator_TEST.getDefaultSettings();
         Test.setMock(HttpCalloutMock.class, new ADDR_MockGoogleGeoAPIResponse_TEST());
 
-        Address__c a = new Address__c(MailingState__c = 'CA',  MailingCity__c = 'Cupertino', MailingStreet__c = 'bad-authentication-for-test');
+        Address__c a = new Address__c(MailingState__c = 'CA',  MailingCity__c = 'Cupertino', MailingStreet__c = '401');
 
         Test.StartTest();
         ADDR_GoogleGeoAPI_Validator testValidator = new ADDR_GoogleGeoAPI_Validator();
@@ -200,6 +200,5 @@ public with sharing class ADDR_GoogleGeoAPI_Validator_TEST {
         ADDR_GoogleGeoAPI_Validator testValidator = new ADDR_GoogleGeoAPI_Validator();
         system.assertEquals('The Google Geocoding API', testValidator.getServiceName());
         system.assertEquals('https://maps.googleapis.com/maps/api/geocode/json?', testValidator.getDefaultURL());
-        system.assertNotEquals(null, testValidator.getHelpText());
     }
 }
